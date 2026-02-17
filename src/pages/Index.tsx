@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Play, Radio } from "lucide-react";
 import { getMoodSuggestions, DEFAULT_GRADIENTS, type MoodSuggestion } from "@/lib/moods";
 
@@ -24,8 +24,8 @@ const Index = () => {
     if (e.key === "Enter") handlePlay();
   };
 
-  const embedUrl = videoQuery
-    ? `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(videoQuery)}`
+  const youtubeSearchUrl = videoQuery
+    ? `https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(videoQuery)}`
     : "";
 
   const gradientStyle = {
@@ -35,13 +35,10 @@ const Index = () => {
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-      {/* Animated gradient background */}
       <div className="animated-gradient fixed inset-0 opacity-30 transition-all duration-[2000ms]" style={gradientStyle} />
       <div className="fixed inset-0 bg-background/80" />
 
-      {/* Content */}
       <div className="relative z-10 flex flex-col items-center gap-8 px-4 w-full max-w-2xl">
-        {/* Logo / Title */}
         <div className="flex flex-col items-center gap-3">
           <div className="flex items-center gap-3">
             <Radio className="w-8 h-8 text-primary animate-pulse" />
@@ -54,7 +51,6 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Input + Play */}
         <div className="glass flex items-center gap-2 p-2 rounded-2xl w-full max-w-md">
           <input
             type="text"
@@ -72,7 +68,6 @@ const Index = () => {
           </button>
         </div>
 
-        {/* Mood Suggestions */}
         <div className="flex flex-wrap justify-center gap-2 max-w-md">
           {suggestions.map((s) => (
             <button
@@ -86,16 +81,17 @@ const Index = () => {
           ))}
         </div>
 
-        {/* Player */}
         {videoQuery && (
           <div className="glass rounded-2xl p-3 w-full max-w-md animate-fade-in">
             <div className="rounded-xl overflow-hidden aspect-video">
               <iframe
-                src={embedUrl}
+                src={youtubeSearchUrl}
                 title="Vibe Radio Player"
                 className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
+                referrerPolicy="strict-origin-when-cross-origin"
+                sandbox="allow-forms allow-scripts allow-pointer-lock allow-same-origin allow-top-navigation allow-presentation"
               />
             </div>
             <p className="text-center text-muted-foreground text-xs mt-3 tracking-wide">
