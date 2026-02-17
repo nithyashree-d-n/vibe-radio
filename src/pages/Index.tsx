@@ -1,13 +1,23 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Play, Radio } from "lucide-react";
+import { getMoodSuggestions, DEFAULT_GRADIENTS, type MoodSuggestion } from "@/lib/moods";
 
 const Index = () => {
   const [mood, setMood] = useState("");
   const [videoQuery, setVideoQuery] = useState("");
+  const [gradients, setGradients] = useState(DEFAULT_GRADIENTS);
+  const suggestions = useMemo(() => getMoodSuggestions(), []);
 
-  const handlePlay = () => {
-    if (!mood.trim()) return;
-    setVideoQuery(`lofi ${mood.trim()} livestream`);
+  const handlePlay = (moodText?: string) => {
+    const query = (moodText ?? mood).trim();
+    if (!query) return;
+    if (moodText) setMood(moodText);
+    setVideoQuery(`lofi ${query} livestream`);
+  };
+
+  const handleSuggestionClick = (s: MoodSuggestion) => {
+    setGradients(s.gradients);
+    handlePlay(s.label);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -18,10 +28,15 @@ const Index = () => {
     ? `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(videoQuery)}`
     : "";
 
+  const gradientStyle = {
+    background: `linear-gradient(-45deg, hsl(${gradients[0]}), hsl(${gradients[1]}), hsl(${gradients[2]}), hsl(${gradients[3]}), hsl(${gradients[0]}))`,
+    backgroundSize: "400% 400%",
+  };
+
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
       {/* Animated gradient background */}
-      <div className="animated-gradient fixed inset-0 opacity-30" />
+      <div className="animated-gradient fixed inset-0 opacity-30 transition-all duration-[2000ms]" style={gradientStyle} />
       <div className="fixed inset-0 bg-background/80" />
 
       {/* Content */}
@@ -50,11 +65,25 @@ const Index = () => {
             className="glass-input flex-1 px-4 py-3 rounded-xl text-sm outline-none bg-transparent border-none backdrop-blur-none"
           />
           <button
-            onClick={handlePlay}
+            onClick={() => handlePlay()}
             className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-opacity shrink-0"
           >
             <Play className="w-5 h-5 ml-0.5" />
           </button>
+        </div>
+
+        {/* Mood Suggestions */}
+        <div className="flex flex-wrap justify-center gap-2 max-w-md">
+          {suggestions.map((s) => (
+            <button
+              key={s.label}
+              onClick={() => handleSuggestionClick(s)}
+              className="glass px-4 py-2 rounded-full text-sm text-foreground/80 hover:text-foreground hover:border-primary/30 transition-all duration-300 flex items-center gap-1.5"
+            >
+              <span>{s.emoji}</span>
+              <span>{s.label}</span>
+            </button>
+          ))}
         </div>
 
         {/* Player */}
