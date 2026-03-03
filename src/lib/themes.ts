@@ -1,58 +1,43 @@
 export interface Theme {
   name: string;
-  gradients: [string, string, string, string];
-  overlay?: 'noise' | 'pulse' | 'grain';
+  gradient: string;
+  videoIds: string[];
   keywords: string[];
 }
 
 export const THEMES: Record<string, Theme> = {
   cyberpunk: {
     name: "Cyberpunk",
-    gradients: ["320 100% 60%", "280 100% 65%", "340 90% 55%", "300 95% 60%"],
-    overlay: 'noise',
-    keywords: ["cyber", "neon", "digital", "tech", "futuristic", "hacker", "matrix"],
+    gradient: "linear-gradient(to bottom, #2d0b3d, #000000)",
+    videoIds: ["jfKfPfyJRdk", "4xDzrJKXOOY"],
+    keywords: ["cyber", "neon", "digital", "tech", "futuristic", "hacker", "matrix", "synthwave"],
   },
-  forest: {
-    name: "Forest",
-    gradients: ["150 60% 25%", "140 70% 20%", "160 50% 30%", "145 65% 22%"],
-    overlay: undefined,
-    keywords: ["forest", "nature", "green", "woods", "trees", "earth", "natural", "organic"],
+  rainy: {
+    name: "Rainy",
+    gradient: "linear-gradient(to bottom, #1e293b, #334155)",
+    videoIds: ["hBg0-64pC8E", "56vVIn3p3_E"],
+    keywords: ["rain", "rainy", "storm", "cloudy", "grey", "melancholy", "cozy"],
   },
-  deepSea: {
-    name: "Deep Sea",
-    gradients: ["200 80% 20%", "180 70% 30%", "210 60% 25%", "190 75% 28%"],
-    overlay: 'pulse',
-    keywords: ["ocean", "sea", "water", "deep", "blue", "aqua", "marine", "underwater"],
+  zen: {
+    name: "Zen",
+    gradient: "linear-gradient(to bottom, #064e3b, #14532d)",
+    videoIds: ["5yx6BWV8_80", "DWcJFNfaw9c"],
+    keywords: ["zen", "calm", "peaceful", "nature", "forest", "green", "garden", "organic", "trees"],
   },
-  sunset: {
-    name: "Sunset",
-    gradients: ["15 90% 55%", "0 85% 50%", "35 80% 60%", "20 88% 52%"],
-    overlay: undefined,
-    keywords: ["sunset", "warm", "orange", "red", "gold", "evening", "dusk", "amber"],
-  },
-  minimalist: {
-    name: "Minimalist",
-    gradients: ["0 0% 95%", "0 0% 90%", "0 0% 92%", "0 0% 88%"],
-    overlay: 'grain',
-    keywords: ["minimal", "simple", "clean", "white", "light", "calm", "zen", "pure"],
+  midnight: {
+    name: "Midnight",
+    gradient: "linear-gradient(to bottom, #020617, #1e1b4b)",
+    videoIds: ["n61ULEU7QD4", "tNkZsRW7h2c"],
+    keywords: ["midnight", "night", "dark", "space", "deep", "ocean", "sea", "blue", "sunset"],
   },
 };
 
+export const DEFAULT_THEME = THEMES.midnight;
+
 export function matchMoodToTheme(mood: string): Theme {
-  const lowerMood = mood.toLowerCase().trim();
-
-  for (const [_, theme] of Object.entries(THEMES)) {
-    if (theme.keywords.some(keyword => lowerMood.includes(keyword))) {
-      return theme;
-    }
+  const lower = mood.toLowerCase().trim();
+  for (const theme of Object.values(THEMES)) {
+    if (theme.keywords.some(k => lower.includes(k))) return theme;
   }
-
-  return THEMES.minimalist;
-}
-
-export function getThemeStyle(theme: Theme) {
-  return {
-    background: `linear-gradient(-45deg, hsl(${theme.gradients[0]}), hsl(${theme.gradients[1]}), hsl(${theme.gradients[2]}), hsl(${theme.gradients[3]}), hsl(${theme.gradients[0]}))`,
-    backgroundSize: "400% 400%",
-  };
+  return DEFAULT_THEME;
 }
