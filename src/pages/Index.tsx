@@ -1,14 +1,12 @@
 import { useState, useMemo } from "react";
 import { Play, Radio, SkipForward } from "lucide-react";
-import { getMoodSuggestions, type MoodSuggestion } from "@/lib/moods";
-import { matchMoodToTheme, getThemeStyle, type Theme, THEMES } from "@/lib/themes";
-
-const FALLBACK_VIDEO_ID = "jfKfPfyJRdk";
+import { getMoodSuggestions } from "@/lib/moods";
+import { THEMES, matchMoodToTheme, type Theme } from "@/lib/themes";
 
 const Index = () => {
   const [mood, setMood] = useState("");
-  const [activeVideoId, setActiveVideoId] = useState("");
-  const [currentTheme, setCurrentTheme] = useState<Theme>(THEMES.minimalist);
+  const [activeTheme, setActiveTheme] = useState<Theme>(THEMES.Midnight);
+  const [isPlaying, setIsPlaying] = useState(false);
   const suggestions = useMemo(() => getMoodSuggestions(), []);
 
   const handlePlay = (moodText?: string) => {
@@ -16,66 +14,79 @@ const Index = () => {
     if (!query) return;
     if (moodText) setMood(moodText);
 
-    const matchedTheme = matchMoodToTheme(query);
-    setCurrentTheme(matchedTheme);
-    setActiveVideoId(FALLBACK_VIDEO_ID);
+    const matched = matchMoodToTheme(query);
+    setActiveTheme(matched);
+    setIsPlaying(true);
+  };
+
+  const handleThemeClick = (themeName: string) => {
+    setActiveTheme(THEMES[themeName]);
+    setMood(themeName.toLowerCase());
+    setIsPlaying(true);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") handlePlay();
   };
 
-  const gradientStyle = getThemeStyle(currentTheme);
-  const overlayClass = currentTheme.overlay ? `overlay-${currentTheme.overlay}` : '';
-
-  const iframeSrc = activeVideoId
-    ? `https://www.youtube.com/embed/${activeVideoId}?autoplay=1&mute=1&origin=${window.location.origin}`
+  const iframeSrc = isPlaying
+    ? `https://www.youtube-nocookie.com/embed/${activeTheme.id}?autoplay=1&mute=1`
     : "";
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-      <div
-        className={`animated-gradient fixed inset-0 opacity-30 transition-all duration-[2000ms] ${overlayClass}`}
-        style={gradientStyle}
-      />
-      <div className="fixed inset-0 bg-background/80" />
+    <div
+      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
+      style={{
+        background: activeTheme.gradient,
+        minHeight: "100vh",
+        transition: "all 0.5s ease",
+      }}
+    >
+      <div className="fixed inset-0 bg-black/40" />
 
       <div className="relative z-50 flex flex-col items-center gap-8 px-4 w-full max-w-2xl">
+        {/* Title */}
         <div className="flex flex-col items-center gap-3">
           <div className="flex items-center gap-3">
-            <Radio className="w-8 h-8 text-primary animate-pulse" />
-            <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-foreground">
+            <Radio className="w-8 h-8 animate-pulse" style={{ color: activeTheme.accent }} />
+            <h1
+              className="text-5xl sm:text-6xl font-bold tracking-tight"
+              style={{ color: activeTheme.accent }}
+            >
               Vibe Radio
             </h1>
           </div>
-          <p className="text-muted-foreground text-sm tracking-widest uppercase">
+          <p className="text-white/60 text-sm tracking-widest uppercase">
             Type a mood. Find your frequency.
           </p>
         </div>
 
+        {/* Search bar */}
         <div className="glass flex items-center gap-2 p-2 rounded-2xl w-full max-w-md">
           <input
             type="text"
             value={mood}
             onChange={(e) => setMood(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="cyber, forest, ocean, sunset..."
-            className="glass-input flex-1 px-4 py-3 rounded-xl text-sm outline-none bg-transparent border-none backdrop-blur-none"
+            placeholder="cyber, rainy, zen, midnight..."
+            className="glass-input flex-1 px-4 py-3 rounded-xl text-sm outline-none bg-transparent border-none"
           />
           <button
             onClick={() => handlePlay()}
-            className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-opacity shrink-0"
+            className="flex items-center justify-center w-12 h-12 rounded-xl text-black hover:opacity-90 transition-opacity shrink-0"
+            style={{ backgroundColor: activeTheme.accent }}
           >
             <Play className="w-5 h-5 ml-0.5" />
           </button>
         </div>
 
+        {/* Mood suggestion chips */}
         <div className="flex flex-wrap justify-center gap-2 max-w-md">
           {suggestions.map((s) => (
             <button
               key={s.label}
               onClick={() => handlePlay(s.label)}
-              className="glass px-4 py-2 rounded-full text-sm text-foreground/80 hover:text-foreground hover:border-primary/30 transition-all duration-300 flex items-center gap-1.5"
+              className="glass px-4 py-2 rounded-full text-sm text-white/70 hover:text-white transition-all duration-300 flex items-center gap-1.5"
             >
               <span>{s.emoji}</span>
               <span>{s.label}</span>
@@ -83,7 +94,27 @@ const Index = () => {
           ))}
         </div>
 
-        {activeVideoId && (
+        {/* Theme buttons */}
+        <div className="flex flex-wrap justify-center gap-2 max-w-md">
+          {Object.keys(THEMES).map((name) => (
+            <button
+              key={name}
+              onClick={() => handleThemeClick(name)}
+              className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105"
+              style={{
+                border: `1px solid ${THEMES[name].accent}`,
+                color: THEMES[name].accent,
+                background:
+                  activeTheme.name === name ? `${THEMES[name].accent}22` : "transparent",
+              }}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+
+        {/* Player */}
+        {isPlaying && (
           <div className="glass rounded-2xl p-3 w-full max-w-md animate-fade-in">
             <div className="rounded-xl overflow-hidden aspect-video bg-black/50">
               <iframe
@@ -98,15 +129,18 @@ const Index = () => {
               />
             </div>
             <div className="flex items-center justify-between mt-3 px-1">
-              <p className="text-muted-foreground text-xs tracking-wide">
-                Now vibing: <span className="text-foreground">{mood || "lofi"}</span>
-                <span className="text-primary/70 ml-2">({currentTheme.name})</span>
+              <p className="text-white/50 text-xs tracking-wide">
+                Now vibing:{" "}
+                <span className="text-white">{mood || "midnight"}</span>
+                <span className="ml-2" style={{ color: activeTheme.accent }}>
+                  ({activeTheme.name})
+                </span>
               </p>
               <a
-                href={`https://www.youtube.com/watch?v=${activeVideoId}`}
+                href={`https://www.youtube.com/watch?v=${activeTheme.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors"
               >
                 <SkipForward className="w-3.5 h-3.5" />
                 <span>Open in YouTube</span>

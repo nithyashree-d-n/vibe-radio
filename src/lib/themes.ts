@@ -1,58 +1,61 @@
 export interface Theme {
   name: string;
-  gradients: [string, string, string, string];
-  overlay?: 'noise' | 'pulse' | 'grain';
-  keywords: string[];
+  id: string;
+  gradient: string;
+  accent: string;
 }
 
 export const THEMES: Record<string, Theme> = {
-  cyberpunk: {
+  Cyberpunk: {
     name: "Cyberpunk",
-    gradients: ["320 100% 60%", "280 100% 65%", "340 90% 55%", "300 95% 60%"],
-    overlay: 'noise',
-    keywords: ["cyber", "neon", "digital", "tech", "futuristic", "hacker", "matrix"],
+    id: "jfKfPfyJRdk",
+    gradient: "linear-gradient(to bottom, #2d0b3d, #000000)",
+    accent: "#ff00ff",
   },
-  forest: {
-    name: "Forest",
-    gradients: ["150 60% 25%", "140 70% 20%", "160 50% 30%", "145 65% 22%"],
-    overlay: undefined,
-    keywords: ["forest", "nature", "green", "woods", "trees", "earth", "natural", "organic"],
+  Rainy: {
+    name: "Rainy",
+    id: "mPZkdNFkNps",
+    gradient: "linear-gradient(to bottom, #1e293b, #0f172a)",
+    accent: "#60a5fa",
   },
-  deepSea: {
-    name: "Deep Sea",
-    gradients: ["200 80% 20%", "180 70% 30%", "210 60% 25%", "190 75% 28%"],
-    overlay: 'pulse',
-    keywords: ["ocean", "sea", "water", "deep", "blue", "aqua", "marine", "underwater"],
+  Zen: {
+    name: "Zen",
+    id: "hlWiI4xVXKY",
+    gradient: "linear-gradient(to bottom, #134e4a, #064e3b)",
+    accent: "#34d399",
   },
-  sunset: {
+  Midnight: {
+    name: "Midnight",
+    id: "jfKfPfyJRdk",
+    gradient: "linear-gradient(to bottom, #000000, #1e1b4b)",
+    accent: "#a78bfa",
+  },
+  Sunset: {
     name: "Sunset",
-    gradients: ["15 90% 55%", "0 85% 50%", "35 80% 60%", "20 88% 52%"],
-    overlay: undefined,
-    keywords: ["sunset", "warm", "orange", "red", "gold", "evening", "dusk", "amber"],
+    id: "jfKfPfyJRdk",
+    gradient: "linear-gradient(to bottom, #7c2d12, #1c1917)",
+    accent: "#fb923c",
   },
-  minimalist: {
-    name: "Minimalist",
-    gradients: ["0 0% 95%", "0 0% 90%", "0 0% 92%", "0 0% 88%"],
-    overlay: 'grain',
-    keywords: ["minimal", "simple", "clean", "white", "light", "calm", "zen", "pure"],
+  Ocean: {
+    name: "Ocean",
+    id: "jfKfPfyJRdk",
+    gradient: "linear-gradient(to bottom, #164e63, #0c4a6e)",
+    accent: "#22d3ee",
   },
 };
 
 export function matchMoodToTheme(mood: string): Theme {
-  const lowerMood = mood.toLowerCase().trim();
-
-  for (const [_, theme] of Object.entries(THEMES)) {
-    if (theme.keywords.some(keyword => lowerMood.includes(keyword))) {
-      return theme;
-    }
-  }
-
-  return THEMES.minimalist;
-}
-
-export function getThemeStyle(theme: Theme) {
-  return {
-    background: `linear-gradient(-45deg, hsl(${theme.gradients[0]}), hsl(${theme.gradients[1]}), hsl(${theme.gradients[2]}), hsl(${theme.gradients[3]}), hsl(${theme.gradients[0]}))`,
-    backgroundSize: "400% 400%",
+  const lower = mood.toLowerCase().trim();
+  const keywords: Record<string, string> = {
+    cyber: "Cyberpunk", neon: "Cyberpunk", digital: "Cyberpunk", tech: "Cyberpunk",
+    rain: "Rainy", storm: "Rainy", thunder: "Rainy", cloudy: "Rainy",
+    zen: "Zen", calm: "Zen", peace: "Zen", meditat: "Zen", forest: "Zen", nature: "Zen",
+    midnight: "Midnight", night: "Midnight", dark: "Midnight", sleep: "Midnight",
+    sunset: "Sunset", warm: "Sunset", orange: "Sunset", evening: "Sunset",
+    ocean: "Ocean", sea: "Ocean", water: "Ocean", beach: "Ocean", wave: "Ocean",
   };
+  for (const [kw, themeName] of Object.entries(keywords)) {
+    if (lower.includes(kw)) return THEMES[themeName];
+  }
+  return THEMES.Midnight;
 }
