@@ -1,10 +1,20 @@
 import { useState, useMemo } from "react";
-import { Play, Radio } from "lucide-react";
+import { Play, Radio, SkipForward } from "lucide-react";
 import { getMoodSuggestions, DEFAULT_GRADIENTS, type MoodSuggestion } from "@/lib/moods";
+
+const FALLBACK_VIDEO_ID = "jfKfPfyJRdk";
+
+const SEARCH_SUFFIXES = [
+  "lofi livestream no copyright",
+  "lofi hip hop radio live",
+  "chill beats livestream no copyright music",
+];
 
 const Index = () => {
   const [mood, setMood] = useState("");
   const [videoQuery, setVideoQuery] = useState("");
+  const [searchAttempt, setSearchAttempt] = useState(0);
+  const [usingFallback, setUsingFallback] = useState(false);
   const [gradients, setGradients] = useState(DEFAULT_GRADIENTS);
   const suggestions = useMemo(() => getMoodSuggestions(), []);
 
@@ -12,21 +22,31 @@ const Index = () => {
     const query = (moodText ?? mood).trim();
     if (!query) return;
     if (moodText) setMood(moodText);
-    setVideoQuery(`lofi ${query} livestream`);
+    setSearchAttempt(0);
+    setUsingFallback(false);
+    setVideoQuery(`${query} ${SEARCH_SUFFIXES[0]}`);
   };
 
-  const handleSuggestionClick = (s: MoodSuggestion) => {
-    setGradients(s.gradients);
-    handlePlay(s.label);
+  const handleTryAnother = () => {
+    const nextAttempt = searchAttempt + 1;
+    if (nextAttempt < SEARCH_SUFFIXES.length) {
+      setSearchAttempt(nextAttempt);
+      const base = mood.trim() || "chill";
+      setVideoQuery(`${base} ${SEARCH_SUFFIXES[nextAttempt]}`);
+    } else {
+      setUsingFallback(true);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") handlePlay();
   };
 
-  const youtubeSearchUrl = videoQuery
-    ? `https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(videoQuery)}`
-    : "";
+  const youtubeUrl = usingFallback
+    ? `https://www.youtube-nocookie.com/embed/${FALLBACK_VIDEO_ID}?autoplay=1`
+    : videoQuery
+      ? `https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(videoQuery)}`
+      : "";
 
   const gradientStyle = {
     background: `linear-gradient(-45deg, hsl(${gradients[0]}), hsl(${gradients[1]}), hsl(${gradients[2]}), hsl(${gradients[3]}), hsl(${gradients[0]}))`,
@@ -72,7 +92,10 @@ const Index = () => {
           {suggestions.map((s) => (
             <button
               key={s.label}
-              onClick={() => handleSuggestionClick(s)}
+              onClick={() => {
+                setGradients(s.gradients);
+                handlePlay(s.label);
+              }}
               className="glass px-4 py-2 rounded-full text-sm text-foreground/80 hover:text-foreground hover:border-primary/30 transition-all duration-300 flex items-center gap-1.5"
             >
               <span>{s.emoji}</span>
@@ -81,11 +104,11 @@ const Index = () => {
           ))}
         </div>
 
-        {videoQuery && (
+        {(videoQuery || usingFallback) && (
           <div className="glass rounded-2xl p-3 w-full max-w-md animate-fade-in">
             <div className="rounded-xl overflow-hidden aspect-video">
               <iframe
-                src={youtubeSearchUrl}
+                src={youtubeUrl}
                 title="Vibe Radio Player"
                 className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -94,9 +117,19 @@ const Index = () => {
                 sandbox="allow-forms allow-scripts allow-pointer-lock allow-same-origin allow-top-navigation allow-presentation"
               />
             </div>
-            <p className="text-center text-muted-foreground text-xs mt-3 tracking-wide">
-              Now vibing: <span className="text-foreground">{mood}</span>
-            </p>
+            <div className="flex items-center justify-between mt-3 px-1">
+              <p className="text-muted-foreground text-xs tracking-wide">
+                Now vibing: <span className="text-foreground">{mood || "lofi"}</span>
+                {usingFallback && <span className="text-muted-foreground/60"> (fallback)</span>}
+              </p>
+              <button
+                onClick={handleTryAnother}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <SkipForward className="w-3.5 h-3.5" />
+                <span>Try another</span>
+              </button>
+            </div>
           </div>
         )}
       </div>
