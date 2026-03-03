@@ -1,6 +1,9 @@
 import { useState, useMemo } from "react";
 import { Play, Radio, SkipForward } from "lucide-react";
+import ReactPlayer from "react-player";
 import { getMoodSuggestions, DEFAULT_GRADIENTS, type MoodSuggestion } from "@/lib/moods";
+import { matchMoodToTheme, getThemeStyle, type Theme } from "@/lib/themes";
+import { THEMES } from "@/lib/themes";
 
 const FALLBACK_VIDEO_ID = "jfKfPfyJRdk";
 
@@ -15,13 +18,17 @@ const Index = () => {
   const [videoQuery, setVideoQuery] = useState("");
   const [searchAttempt, setSearchAttempt] = useState(0);
   const [usingFallback, setUsingFallback] = useState(false);
-  const [gradients, setGradients] = useState(DEFAULT_GRADIENTS);
+  const [currentTheme, setCurrentTheme] = useState<Theme>(THEMES.minimalist);
   const suggestions = useMemo(() => getMoodSuggestions(), []);
 
   const handlePlay = (moodText?: string) => {
     const query = (moodText ?? mood).trim();
     if (!query) return;
     if (moodText) setMood(moodText);
+
+    const matchedTheme = matchMoodToTheme(query);
+    setCurrentTheme(matchedTheme);
+
     setSearchAttempt(0);
     setUsingFallback(false);
     setVideoQuery(`${query} ${SEARCH_SUFFIXES[0]}`);
@@ -42,20 +49,15 @@ const Index = () => {
     if (e.key === "Enter") handlePlay();
   };
 
-  const youtubeUrl = usingFallback
-    ? `https://www.youtube-nocookie.com/embed/${FALLBACK_VIDEO_ID}?autoplay=1`
-    : videoQuery
-      ? `https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(videoQuery)}`
-      : "";
-
-  const gradientStyle = {
-    background: `linear-gradient(-45deg, hsl(${gradients[0]}), hsl(${gradients[1]}), hsl(${gradients[2]}), hsl(${gradients[3]}), hsl(${gradients[0]}))`,
-    backgroundSize: "400% 400%",
-  };
+  const gradientStyle = getThemeStyle(currentTheme);
+  const overlayClass = currentTheme.overlay ? `overlay-${currentTheme.overlay}` : '';
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-      <div className="animated-gradient fixed inset-0 opacity-30 transition-all duration-[2000ms]" style={gradientStyle} />
+      <div
+        className={`animated-gradient fixed inset-0 opacity-30 transition-all duration-[2000ms] ${overlayClass}`}
+        style={gradientStyle}
+      />
       <div className="fixed inset-0 bg-background/80" />
 
       <div className="relative z-10 flex flex-col items-center gap-8 px-4 w-full max-w-2xl">
@@ -77,7 +79,7 @@ const Index = () => {
             value={mood}
             onChange={(e) => setMood(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="chill, rainy, midnight study..."
+            placeholder="cyber, forest, ocean, sunset..."
             className="glass-input flex-1 px-4 py-3 rounded-xl text-sm outline-none bg-transparent border-none backdrop-blur-none"
           />
           <button
@@ -93,7 +95,6 @@ const Index = () => {
             <button
               key={s.label}
               onClick={() => {
-                setGradients(s.gradients);
                 handlePlay(s.label);
               }}
               className="glass px-4 py-2 rounded-full text-sm text-foreground/80 hover:text-foreground hover:border-primary/30 transition-all duration-300 flex items-center gap-1.5"
@@ -106,21 +107,35 @@ const Index = () => {
 
         {(videoQuery || usingFallback) && (
           <div className="glass rounded-2xl p-3 w-full max-w-md animate-fade-in">
-            <div className="rounded-xl overflow-hidden aspect-video">
-              <iframe
-                src={youtubeUrl}
-                title="Vibe Radio Player"
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                referrerPolicy="strict-origin-when-cross-origin"
-                sandbox="allow-forms allow-scripts allow-pointer-lock allow-same-origin allow-top-navigation allow-presentation"
+            <div className="rounded-xl overflow-hidden aspect-video bg-black/50">
+              <ReactPlayer
+                url={usingFallback
+                  ? `https://www.youtube-nocookie.com/watch?v=${FALLBACK_VIDEO_ID}`
+                  : `https://www.youtube-nocookie.com/watch?v=${FALLBACK_VIDEO_ID}`}
+                playing={true}
+                controls={true}
+                width="100%"
+                height="100%"
+                config={{
+                  youtube: {
+                    playerVars: {
+                      autoplay: 1,
+                      modestbranding: 1,
+                      rel: 0,
+                      origin: window.location.origin,
+                    },
+                  },
+                }}
+                onError={() => {
+                  console.error('Player error, using fallback');
+                  setUsingFallback(true);
+                }}
               />
             </div>
             <div className="flex items-center justify-between mt-3 px-1">
               <p className="text-muted-foreground text-xs tracking-wide">
                 Now vibing: <span className="text-foreground">{mood || "lofi"}</span>
-                {usingFallback && <span className="text-muted-foreground/60"> (fallback)</span>}
+                <span className="text-primary/70 ml-2">({currentTheme.name})</span>
               </p>
               <button
                 onClick={handleTryAnother}
